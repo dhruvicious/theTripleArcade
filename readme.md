@@ -1,4 +1,4 @@
-# Three-in-One Arcade
+# tripleArcade
 
 A web-based arcade featuring three classic games: **Breakout**, **Snake**, and **Tetris**. Built with pure JavaScript, HTML5, and CSS3 in a single-page application for a seamless retro gaming experience.
 
