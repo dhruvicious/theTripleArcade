@@ -86,5 +86,3 @@ three-in-one-arcade/
 ---
 
 **Enjoy the games!** 🕹️
-
-> This project demonstrates vanilla JavaScript game development and serves as a great learning resource for aspiring web developers.
