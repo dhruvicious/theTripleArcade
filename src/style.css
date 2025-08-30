@@ -1,0 +1,83 @@
+@font-face {
+  font-family: "ArcadeFont";
+  src: url("../static/fonts/ARCADE.TTF") format("truetype");
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #345995;
+  font-family: "ArcadeFont", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#container_menu {
+  text-align: center;
+  width: 100%;
+  max-width: 1200px; /* keeps game centered */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Title */
+#title {
+  font-size: clamp(40px, 10vw, 150px);
+  color: #E8FFB7;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Menu */
+#menu {
+  margin-top: 20px;
+}
+
+#game-menu {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+}
+
+#game-menu li {
+  padding: 10px;
+  color: #E8FFB7;
+  font-size: clamp(30px, 8vw, 100px);
+  cursor: pointer;
+}
+
+#text {
+  font-size: clamp(20px, 5vw, 70px);
+  color: #E8FFB7;
+  margin-top: 20px;
+  animation: opacitySinusoidal 0.5s infinite alternate;
+}
+
+/* Canvases */
+canvas {
+  display: none;
+  border: 12px solid white;
+  max-width: 90vw;
+  max-height: 70vh;
+  height: auto;
+  margin-top: 20px;
+}
+
+/* Scoreboards */
+#currentScore, #maxScore {
+  font-size: clamp(18px, 5vw, 70px);
+  color: #E8FFB7;
+  text-align: center;
+  margin-top: 10px;
+  display: none;
+}
+
+@keyframes opacitySinusoidal {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
