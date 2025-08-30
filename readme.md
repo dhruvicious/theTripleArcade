@@ -80,29 +80,13 @@ three-in-one-arcade/
 -   **JavaScript (ES6+)**: Game logic and interactive functionality
 -   **Webpack**: Module bundling for production builds
 
-## 🔧 Development
-
-### Local Development
-
-For the best development experience, use a local server:
+## 🔧 Running the Project
 
 ```bash
-# Using Python
-python -m http.server 8000
+npm i
 
-# Using Node.js
-npx http-server src/
+npm run dev
 
-# Using PHP
-php -S localhost:8000 -t src/
-```
-
-### Building for Production
-
-If using the webpack bundler:
-
-```bash
-npm install
 npm run build
 ```
 
