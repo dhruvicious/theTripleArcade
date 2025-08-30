@@ -22,25 +22,28 @@ A web-based arcade featuring three classic games: **Breakout**, **Snake**, and *
 1. **Clone the repository**
 
     ```bash
-    git clone https://github.com/yourusername/three-in-one-arcade.git
+    #using SSL
+    git clone git@github.com:dhruvicious/theTripleArcade.git
+
+    #using HTTPS
+    git clone https://github.com/dhruvicious/theTripleArcade.git
     ```
 
 2. **Navigate to the project directory**
 
     ```bash
-    cd three-in-one-arcade
+    cd tripleArcade
     ```
 
 3. **Open the game**
 
-    ```bash
-    # Option 1: Open directly in browser
-    open src/index.html
+```bash
+npm i
 
-    # Option 2: Use a local server (recommended)
-    python -m http.server 8000
-    # Then navigate to http://localhost:8000/src/
-    ```
+npm run dev
+
+npm run build
+```
 
 ## 🎯 How to Play
 
@@ -79,16 +82,6 @@ three-in-one-arcade/
 -   **CSS3**: Styling, animations, and responsive layout
 -   **JavaScript (ES6+)**: Game logic and interactive functionality
 -   **Webpack**: Module bundling for production builds
-
-## 🔧 Running the Project
-
-```bash
-npm i
-
-npm run dev
-
-npm run build
-```
 
 ---
 
