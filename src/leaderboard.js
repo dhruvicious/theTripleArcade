@@ -1,12 +1,28 @@
 /**
  * Leaderboard Module
  * Manages per-game top-10 leaderboards.
- * Uses Vercel KV API when deployed, falls back to localStorage for local dev.
- * Provides an arcade-style overlay for name entry and leaderboard display.
+ * Uses Vercel API + Upstash Redis when deployed, falls back to localStorage for local dev.
+ * Caches fetched boards to minimize API round trips.
  */
 
 const API_BASE = "/api/leaderboard";
 const LEADERBOARD_SIZE = 10;
+const CACHE_TTL_MS = 10000; // 10 second cache
+
+// ─── In-memory cache ─────────────────────────────────────
+const boardCache = {};
+
+function getCachedBoard(gameKey) {
+  const entry = boardCache[gameKey];
+  if (entry && Date.now() - entry.ts < CACHE_TTL_MS) {
+    return entry.data;
+  }
+  return null;
+}
+
+function setCachedBoard(gameKey, data) {
+  boardCache[gameKey] = { data, ts: Date.now() };
+}
 
 // ─── Local storage fallback ─────────────────────────────
 const STORAGE_KEYS = {
@@ -21,9 +37,7 @@ function getLocalLeaderboard(gameKey) {
   try {
     const data = JSON.parse(localStorage.getItem(key));
     if (Array.isArray(data)) return data;
-  } catch (e) {
-    // corrupted data
-  }
+  } catch (e) {}
   return [];
 }
 
@@ -37,39 +51,31 @@ function addToLocalLeaderboard(gameKey, name, score) {
   const board = getLocalLeaderboard(gameKey);
   board.push({ name: name.toUpperCase(), score });
   board.sort((a, b) => b.score - a.score);
-  if (board.length > LEADERBOARD_SIZE) {
-    board.length = LEADERBOARD_SIZE;
-  }
+  if (board.length > LEADERBOARD_SIZE) board.length = LEADERBOARD_SIZE;
   saveLocalLeaderboard(gameKey, board);
   return board;
 }
 
-// ─── API-backed functions (with local fallback) ──────────
+// ─── API functions ───────────────────────────────────────
 
-/**
- * Get the leaderboard for a given game.
- * Tries the API first, falls back to localStorage.
- */
-async function getLeaderboard(gameKey) {
+async function fetchBoard(gameKey) {
+  // Check cache first
+  const cached = getCachedBoard(gameKey);
+  if (cached) return cached;
+
   try {
     const res = await fetch(`${API_BASE}?game=${gameKey}`);
     if (res.ok) {
       const data = await res.json();
-      // Cache locally
       saveLocalLeaderboard(gameKey, data);
+      setCachedBoard(gameKey, data);
       return data;
     }
-  } catch (e) {
-    // API unavailable (local dev), use localStorage
-  }
+  } catch (e) {}
   return getLocalLeaderboard(gameKey);
 }
 
-/**
- * Add a score to the leaderboard.
- * Tries the API first, falls back to localStorage.
- */
-async function addToLeaderboard(gameKey, name, score) {
+async function postScore(gameKey, name, score) {
   try {
     const res = await fetch(API_BASE, {
       method: "POST",
@@ -79,27 +85,21 @@ async function addToLeaderboard(gameKey, name, score) {
     if (res.ok) {
       const data = await res.json();
       saveLocalLeaderboard(gameKey, data);
+      setCachedBoard(gameKey, data);
       return data;
     }
-  } catch (e) {
-    // API unavailable, use localStorage
-  }
+  } catch (e) {}
   return addToLocalLeaderboard(gameKey, name, score);
 }
 
-/**
- * Check if a score qualifies for the leaderboard.
- */
-async function qualifiesForLeaderboard(gameKey, score) {
+// ─── Public API ──────────────────────────────────────────
+
+function qualifiesForBoard(board, score) {
   if (score <= 0) return false;
-  const board = await getLeaderboard(gameKey);
   if (board.length < LEADERBOARD_SIZE) return true;
   return score > board[board.length - 1].score;
 }
 
-/**
- * Find the rank a score would receive (1-indexed), or -1 if it doesn't qualify.
- */
 function getRank(board, score) {
   if (score <= 0) return -1;
   for (let i = 0; i < board.length; i++) {
@@ -109,13 +109,12 @@ function getRank(board, score) {
   return -1;
 }
 
-// ─── Overlay UI ────────────────────────────────────────────
+// ─── Overlay UI ──────────────────────────────────────────
 
 let overlayEl = null;
 
 function createOverlayElement() {
   if (overlayEl) return overlayEl;
-
   overlayEl = document.createElement("div");
   overlayEl.id = "leaderboard-overlay";
   overlayEl.innerHTML = `
@@ -124,9 +123,7 @@ function createOverlayElement() {
       <div class="lb-subtitle"></div>
       <div class="lb-table-wrap">
         <table class="lb-table">
-          <thead>
-            <tr><th>#</th><th>NAME</th><th>SCORE</th></tr>
-          </thead>
+          <thead><tr><th>#</th><th>NAME</th><th>SCORE</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -148,32 +145,49 @@ function createOverlayElement() {
   return overlayEl;
 }
 
-const GAME_DISPLAY_NAMES = {
-  snake: "SNAKE",
-  tetris: "TETRIS",
-  breakout: "BREAK OUT",
-};
+const GAME_NAMES = { snake: "SNAKE", tetris: "TETRIS", breakout: "BREAK OUT" };
+
+function populateTable(el, board, highlightRank, pendingScore) {
+  const tbody = el.querySelector(".lb-table tbody");
+  tbody.innerHTML = "";
+
+  const entries = [...board];
+  if (highlightRank > 0 && pendingScore !== undefined) {
+    entries.splice(highlightRank - 1, 0, { name: "???", score: pendingScore, pending: true });
+    if (entries.length > LEADERBOARD_SIZE) entries.length = LEADERBOARD_SIZE;
+  }
+
+  if (entries.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="3" class="lb-empty">NO SCORES YET</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+
+  entries.forEach((entry, i) => {
+    const tr = document.createElement("tr");
+    if (entry.pending) tr.classList.add("lb-highlight");
+    tr.innerHTML = `
+      <td class="lb-rank">${String(i + 1).padStart(2, "0")}</td>
+      <td class="lb-name">${entry.name}</td>
+      <td class="lb-score">${entry.score}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
 /**
- * Show the leaderboard overlay (view-only mode).
- * @param {string} gameKey
- * @param {Function} [onClose] - callback when user closes
+ * Show leaderboard (view-only). Single API fetch.
  */
 async function showLeaderboard(gameKey, onClose) {
   const el = createOverlayElement();
-  const board = await getLeaderboard(gameKey);
-
-  el.querySelector(".lb-subtitle").textContent =
-    GAME_DISPLAY_NAMES[gameKey] || gameKey.toUpperCase();
-
-  // hide entry section
+  el.querySelector(".lb-subtitle").textContent = GAME_NAMES[gameKey] || gameKey.toUpperCase();
   el.querySelector(".lb-entry").style.display = "none";
 
+  const board = await fetchBoard(gameKey);
   populateTable(el, board);
-
   el.style.display = "flex";
 
-  // Close handler
   const closeBtn = el.querySelector(".lb-close");
   const closeHandler = () => {
     el.style.display = "none";
@@ -184,42 +198,35 @@ async function showLeaderboard(gameKey, onClose) {
 }
 
 /**
- * Show the leaderboard with name-entry mode (when player sets a new high score).
- * @param {string} gameKey
- * @param {number} score
- * @param {Function} onDone - called with the updated board after entry
+ * Called on game over. Single fetch to check + display.
+ * Only one API call (GET) upfront, one more (POST) on submit.
  */
-async function showLeaderboardEntry(gameKey, score, onDone) {
+async function handleGameOver(gameKey, score, onDone) {
+  const board = await fetchBoard(gameKey);
+
+  if (!qualifiesForBoard(board, score)) {
+    if (onDone) onDone(board);
+    return;
+  }
+
   const el = createOverlayElement();
-  const board = await getLeaderboard(gameKey);
   const rank = getRank(board, score);
+  el.querySelector(".lb-subtitle").textContent = GAME_NAMES[gameKey] || gameKey.toUpperCase();
 
-  el.querySelector(".lb-subtitle").textContent =
-    GAME_DISPLAY_NAMES[gameKey] || gameKey.toUpperCase();
-
-  // Show entry section
   const entrySection = el.querySelector(".lb-entry");
   entrySection.style.display = "flex";
-
   el.querySelector(".lb-entry-score").textContent = score;
 
   const input = el.querySelector(".lb-input");
   input.value = "";
-
-  // Force uppercase and filter to letters only
   const inputHandler = () => {
     input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
   };
   input.addEventListener("input", inputHandler);
 
   populateTable(el, board, rank, score);
-
   el.style.display = "flex";
-
-  // Use requestAnimationFrame to ensure overlay is visible before focusing
-  requestAnimationFrame(() => {
-    input.focus();
-  });
+  requestAnimationFrame(() => input.focus());
 
   const submitBtn = el.querySelector(".lb-submit");
   const closeBtn = el.querySelector(".lb-close");
@@ -236,11 +243,10 @@ async function showLeaderboardEntry(gameKey, score, onDone) {
     if (name.length === 0) name = "AAA";
     while (name.length < 3) name += "_";
 
-    // Disable button while submitting
     submitBtn.disabled = true;
     submitBtn.textContent = "...";
 
-    const updatedBoard = await addToLeaderboard(gameKey, name, score);
+    const updatedBoard = await postScore(gameKey, name, score);
     populateTable(el, updatedBoard);
     entrySection.style.display = "none";
 
@@ -248,7 +254,6 @@ async function showLeaderboardEntry(gameKey, score, onDone) {
     submitBtn.textContent = "OK";
     cleanup();
 
-    // Re-bind close for view mode
     const viewCloseHandler = () => {
       el.style.display = "none";
       closeBtn.removeEventListener("click", viewCloseHandler);
@@ -258,18 +263,11 @@ async function showLeaderboardEntry(gameKey, score, onDone) {
   };
 
   const submitHandler = () => doSubmit();
-
   const keyHandler = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      doSubmit();
-    }
-    // Stop game keys from propagating
+    if (e.key === "Enter") { e.preventDefault(); doSubmit(); }
     e.stopPropagation();
   };
-
   const closeHandler = () => {
-    // Close without saving
     el.style.display = "none";
     cleanup();
     if (onDone) onDone(board);
@@ -280,59 +278,4 @@ async function showLeaderboardEntry(gameKey, score, onDone) {
   input.addEventListener("keydown", keyHandler);
 }
 
-/**
- * Populate the scores table.
- * @param {HTMLElement} el - overlay element
- * @param {Array} board - the leaderboard data
- * @param {number} [highlightRank] - rank to highlight (1-indexed) for a new entry
- * @param {number} [pendingScore] - the score being entered
- */
-function populateTable(el, board, highlightRank, pendingScore) {
-  const tbody = el.querySelector(".lb-table tbody");
-  tbody.innerHTML = "";
-
-  // Build display entries — insert a pending entry at the highlight rank if provided
-  const displayEntries = [...board];
-  if (
-    highlightRank &&
-    highlightRank > 0 &&
-    pendingScore !== undefined
-  ) {
-    displayEntries.splice(highlightRank - 1, 0, {
-      name: "???",
-      score: pendingScore,
-      pending: true,
-    });
-    if (displayEntries.length > LEADERBOARD_SIZE) {
-      displayEntries.length = LEADERBOARD_SIZE;
-    }
-  }
-
-  if (displayEntries.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="3" class="lb-empty">NO SCORES YET</td>`;
-    tbody.appendChild(tr);
-    return;
-  }
-
-  displayEntries.forEach((entry, i) => {
-    const tr = document.createElement("tr");
-    if (entry.pending) {
-      tr.classList.add("lb-highlight");
-    }
-    tr.innerHTML = `
-      <td class="lb-rank">${String(i + 1).padStart(2, "0")}</td>
-      <td class="lb-name">${entry.name}</td>
-      <td class="lb-score">${entry.score}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-export {
-  getLeaderboard,
-  qualifiesForLeaderboard,
-  addToLeaderboard,
-  showLeaderboard,
-  showLeaderboardEntry,
-};
+export { showLeaderboard, handleGameOver };

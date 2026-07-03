@@ -2,11 +2,7 @@ import "./style.css";
 import SnakeGame from "./snake.js";
 import Tetris from "./tetris.js";
 import BreakOut from "./break-out.js";
-import {
-  qualifiesForLeaderboard,
-  showLeaderboard,
-  showLeaderboardEntry,
-} from "./leaderboard.js";
+import { showLeaderboard, handleGameOver } from "./leaderboard.js";
 
 const gameOptions = document.querySelectorAll(".game-option");
 const menuElement = document.getElementById("menu");
@@ -32,18 +28,14 @@ document.querySelectorAll(".lb-menu-btn").forEach((btn) => {
 });
 
 /**
- * Called by a game when the player dies / game resets.
- * If the score qualifies, show the entry overlay; otherwise just continue.
- * @param {string} gameKey - 'snake', 'tetris', or 'breakout'
- * @param {number} score - the final score before reset
+ * Called by a game when the player dies.
+ * Single fetch — checks qualification + shows entry in one call.
  */
-async function onGameOver(gameKey, score) {
-  if (await qualifiesForLeaderboard(gameKey, score)) {
-    leaderboardOpen = true;
-    await showLeaderboardEntry(gameKey, score, () => {
-      leaderboardOpen = false;
-    });
-  }
+function onGameOver(gameKey, score) {
+  leaderboardOpen = true;
+  handleGameOver(gameKey, score, () => {
+    leaderboardOpen = false;
+  });
 }
 
 // ─── Menu navigation ─────────────────────────────────────
