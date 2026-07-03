@@ -9,6 +9,26 @@ const currentScoreElement = document.getElementById("currentScore");
 const maxScoreElement = document.getElementById("maxScore");
 let selectedIndex = 0;
 let currentGame = null;
+
+gameOptions.forEach(function (option, index) {
+  option.addEventListener("mouseenter", function () {
+    if (currentGame == null && selectedIndex !== index) {
+      window.parent.postMessage("select1", "*");
+      selectedIndex = index;
+      updateSelected();
+    }
+  });
+
+  option.addEventListener("click", function () {
+    if (currentGame == null) {
+      window.parent.postMessage("select2", "*");
+      selectedIndex = index;
+      updateSelected();
+      startGameSelected();
+    }
+  });
+});
+
 updateSelected();
 
 function updateSelected() {

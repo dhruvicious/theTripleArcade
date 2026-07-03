@@ -125,7 +125,7 @@ html, body {
 }
 
 /* The selected item switches to a Sith Red Lightsaber glow */
-#game-menu li:hover, #game-menu li.selected {
+#game-menu li.selected {
   color: #fff;
   text-shadow: 
     0 0 5px #fff,
@@ -134,12 +134,12 @@ html, body {
   transform: scale(1.1);
 }
 
-#game-menu li:hover::before, #game-menu li.selected::before {
+#game-menu li.selected::before {
   opacity: 1;
   left: 10px;
 }
 
-#game-menu li:hover::after, #game-menu li.selected::after {
+#game-menu li.selected::after {
   opacity: 1;
   right: 10px;
 }
