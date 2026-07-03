@@ -13,10 +13,10 @@ updateSelected();
 
 function updateSelected() {
   gameOptions.forEach(function (option) {
-    option.textContent = option.textContent.replace(/[<>]/g, "");
+    option.classList.remove("selected");
   });
   const selectedOption = gameOptions[selectedIndex];
-  selectedOption.textContent = "> " + selectedOption.textContent + " <";
+  selectedOption.classList.add("selected");
 }
 
 function handleKeyPress(event) {

@@ -3,21 +3,51 @@
   src: url("../static/fonts/ARCADE.TTF") format("truetype");
 }
 
+:root {
+  --sw-yellow: #ffe81f;
+  --saber-blue: #00bfff;
+  --saber-red: #ff0000;
+  --saber-green: #39ff14;
+  --space-black: #000000;
+  --text-primary: #e0e6ed;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #345995;
+  background-color: var(--space-black);
+  /* A classic starfield effect using radial gradients */
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 130px 80px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 200px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 250px 180px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 300px 70px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 350px 220px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 400px 100px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 450px 150px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 500px 50px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 520px 280px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 60px 250px, #ffffff, rgba(0,0,0,0));
+  background-size: 550px 300px;
+  background-repeat: repeat;
   font-family: "ArcadeFont", sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-primary);
+  overflow: hidden;
 }
 
 #container_menu {
   text-align: center;
   width: 100%;
-  max-width: 1200px; /* keeps game centered */
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -26,15 +56,32 @@ html, body {
 
 /* Title */
 #title {
-  font-size: clamp(40px, 10vw, 150px);
-  color: #E8FFB7;
+  font-size: clamp(40px, 10vw, 120px);
+  color: var(--sw-yellow);
+  text-transform: uppercase;
   margin-top: 20px;
   text-align: center;
+  letter-spacing: 6px;
+  text-shadow: 
+    0 0 5px var(--sw-yellow),
+    0 0 15px rgba(255, 232, 31, 0.5);
+  transform: perspective(300px) rotateX(15deg);
+  transform-origin: 50% 100%;
+  animation: floatTitle 4s infinite alternate ease-in-out;
 }
 
 /* Menu */
 #menu {
-  margin-top: 20px;
+  margin-top: 50px;
+  background: rgba(10, 10, 10, 0.85);
+  padding: 40px 80px;
+  border-radius: 15px;
+  /* Lightsaber Blue Border */
+  border: 2px solid var(--saber-blue);
+  box-shadow: 
+    0 0 15px rgba(0, 191, 255, 0.4),
+    inset 0 0 20px rgba(0, 191, 255, 0.2);
+  backdrop-filter: blur(5px);
 }
 
 #game-menu {
@@ -45,39 +92,101 @@ html, body {
 }
 
 #game-menu li {
-  padding: 10px;
-  color: #E8FFB7;
-  font-size: clamp(30px, 8vw, 100px);
+  padding: 15px 30px;
+  color: #a0c4ff; /* Pale blue for unselected items */
+  font-size: clamp(30px, 6vw, 70px);
   cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
+  min-width: 350px;
+  box-sizing: border-box;
+}
+
+#game-menu li::before, #game-menu li::after {
+  position: absolute;
+  opacity: 0;
+  transition: all 0.2s ease;
+  color: #fff;
+  text-shadow: 
+    0 0 5px #fff,
+    0 0 15px var(--saber-red),
+    0 0 30px var(--saber-red);
+}
+
+#game-menu li::before {
+  content: ">";
+  left: -10px;
+}
+
+#game-menu li::after {
+  content: "<";
+  right: -10px;
+}
+
+/* The selected item switches to a Sith Red Lightsaber glow */
+#game-menu li:hover, #game-menu li.selected {
+  color: #fff;
+  text-shadow: 
+    0 0 5px #fff,
+    0 0 15px var(--saber-red),
+    0 0 30px var(--saber-red);
+  transform: scale(1.1);
+}
+
+#game-menu li:hover::before, #game-menu li.selected::before {
+  opacity: 1;
+  left: 10px;
+}
+
+#game-menu li:hover::after, #game-menu li.selected::after {
+  opacity: 1;
+  right: 10px;
 }
 
 #text {
-  font-size: clamp(20px, 5vw, 70px);
-  color: #E8FFB7;
-  margin-top: 20px;
-  animation: opacitySinusoidal 0.5s infinite alternate;
+  font-size: clamp(16px, 4vw, 30px);
+  color: var(--sw-yellow);
+  margin-top: 35px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 5px rgba(255, 232, 31, 0.3);
+  animation: pulseOpacity 1.5s infinite alternate;
 }
 
-/* Canvases */
+/* Canvases - Jedi Green Lightsaber glow when playing */
 canvas {
   display: none;
-  border: 12px solid white;
+  border: 4px solid var(--saber-green);
+  border-radius: 8px;
+  box-shadow: 
+    0 0 20px rgba(57, 255, 20, 0.5),
+    0 0 40px rgba(57, 255, 20, 0.2);
   max-width: 90vw;
   max-height: 70vh;
   height: auto;
   margin-top: 20px;
+  background-color: #000;
 }
 
 /* Scoreboards */
 #currentScore, #maxScore {
-  font-size: clamp(18px, 5vw, 70px);
-  color: #E8FFB7;
+  font-size: clamp(24px, 5vw, 60px);
+  color: var(--sw-yellow);
+  text-shadow: 
+    0 0 5px var(--sw-yellow),
+    0 0 15px rgba(255, 232, 31, 0.6);
   text-align: center;
-  margin-top: 10px;
+  margin-top: 20px;
   display: none;
+  letter-spacing: 2px;
 }
 
-@keyframes opacitySinusoidal {
-  0% { opacity: 0; }
+@keyframes pulseOpacity {
+  0% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+@keyframes floatTitle {
+  0% { transform: perspective(300px) rotateX(15deg) translateY(0px); }
+  100% { transform: perspective(300px) rotateX(15deg) translateY(-10px); }
 }
