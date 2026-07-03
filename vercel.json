@@ -1,4 +1,3 @@
 {
-  buildCommand: bun run build,
-  outputDirectory: dist
+  "outputDirectory": "dist"
 }
