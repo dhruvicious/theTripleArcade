@@ -1,5 +1,6 @@
 class Tetris {
-  constructor() {
+  constructor(onGameOver) {
+    this.onGameOver = onGameOver;
     this.canvas = document.getElementById("tetris");
     this.currentScoreElement = document.getElementById("currentScore");
     this.maxScoreElement = document.getElementById("maxScore");
@@ -245,6 +246,10 @@ class Tetris {
 
   showGameOver() {
     this.gameOver = true;
+    // Trigger leaderboard check before resetting
+    if (this.onGameOver && this.currentScore > 0) {
+      this.onGameOver("tetris", this.currentScore);
+    }
     this.currentScore = 0;
     this.updateScore();
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);

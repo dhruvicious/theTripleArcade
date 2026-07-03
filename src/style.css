@@ -190,3 +190,307 @@ canvas {
   0% { transform: perspective(300px) rotateX(15deg) translateY(0px); }
   100% { transform: perspective(300px) rotateX(15deg) translateY(-10px); }
 }
+
+/* ─── Leaderboard Overlay ─────────────────────────────── */
+
+#leaderboard-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  font-family: "ArcadeFont", monospace;
+  animation: lbFadeIn 0.3s ease;
+}
+
+@keyframes lbFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lb-panel {
+  background: rgba(5, 5, 20, 0.95);
+  border: 2px solid var(--saber-blue);
+  border-radius: 16px;
+  box-shadow:
+    0 0 30px rgba(0, 191, 255, 0.4),
+    0 0 60px rgba(0, 191, 255, 0.15),
+    inset 0 0 30px rgba(0, 191, 255, 0.1);
+  padding: 30px 40px;
+  min-width: 340px;
+  max-width: 500px;
+  width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: lbSlideUp 0.4s ease;
+}
+
+@keyframes lbSlideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.lb-title {
+  font-size: clamp(24px, 6vw, 48px);
+  color: var(--sw-yellow);
+  text-shadow:
+    0 0 8px var(--sw-yellow),
+    0 0 20px rgba(255, 232, 31, 0.5);
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+
+.lb-subtitle {
+  font-size: clamp(14px, 3vw, 22px);
+  color: var(--saber-blue);
+  text-shadow: 0 0 8px rgba(0, 191, 255, 0.6);
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+/* Table */
+.lb-table-wrap {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "ArcadeFont", monospace;
+}
+
+.lb-table thead th {
+  font-size: clamp(10px, 2.5vw, 16px);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(0, 191, 255, 0.3);
+  text-align: left;
+  letter-spacing: 2px;
+}
+
+.lb-table thead th:last-child {
+  text-align: right;
+}
+
+.lb-table tbody tr {
+  transition: background 0.2s;
+}
+
+.lb-table tbody tr:hover {
+  background: rgba(0, 191, 255, 0.08);
+}
+
+.lb-table td {
+  padding: 8px;
+  font-size: clamp(12px, 3vw, 20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lb-rank {
+  color: rgba(255, 255, 255, 0.4);
+  width: 36px;
+  letter-spacing: 1px;
+}
+
+.lb-name {
+  color: var(--saber-green);
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.4);
+  letter-spacing: 4px;
+}
+
+.lb-score {
+  text-align: right;
+  color: var(--sw-yellow);
+  text-shadow: 0 0 4px rgba(255, 232, 31, 0.4);
+  letter-spacing: 2px;
+}
+
+.lb-empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 24px 8px;
+  font-size: clamp(12px, 3vw, 18px);
+  letter-spacing: 2px;
+}
+
+/* Highlight row for the new entry */
+.lb-highlight {
+  animation: lbPulse 1s ease infinite alternate;
+}
+
+.lb-highlight td {
+  color: #fff !important;
+  text-shadow:
+    0 0 6px #fff,
+    0 0 14px var(--saber-red),
+    0 0 28px var(--saber-red) !important;
+}
+
+@keyframes lbPulse {
+  from { background: rgba(255, 0, 0, 0.08); }
+  to   { background: rgba(255, 0, 0, 0.2); }
+}
+
+/* Entry section */
+.lb-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 232, 31, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 232, 31, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lb-entry-title {
+  font-size: clamp(16px, 4vw, 28px);
+  color: var(--saber-red);
+  text-shadow:
+    0 0 8px var(--saber-red),
+    0 0 20px rgba(255, 0, 0, 0.4);
+  letter-spacing: 3px;
+  animation: lbPulseText 1.2s ease infinite alternate;
+  margin-bottom: 8px;
+}
+
+@keyframes lbPulseText {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
+}
+
+.lb-entry-score {
+  font-size: clamp(24px, 6vw, 48px);
+  color: var(--sw-yellow);
+  text-shadow:
+    0 0 8px var(--sw-yellow),
+    0 0 20px rgba(255, 232, 31, 0.5);
+  margin-bottom: 12px;
+}
+
+.lb-entry-prompt {
+  font-size: clamp(10px, 2.5vw, 16px);
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.lb-input-wrap {
+  margin-bottom: 16px;
+}
+
+.lb-input {
+  font-family: "ArcadeFont", monospace;
+  font-size: clamp(24px, 6vw, 40px);
+  text-align: center;
+  width: 4ch;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--saber-green);
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
+  border: 2px solid var(--saber-green);
+  border-radius: 6px;
+  box-shadow:
+    0 0 12px rgba(57, 255, 20, 0.3),
+    inset 0 0 10px rgba(57, 255, 20, 0.1);
+  padding: 6px 10px;
+  letter-spacing: 8px;
+  outline: none;
+  caret-color: var(--saber-green);
+  text-transform: uppercase;
+}
+
+.lb-input:focus {
+  border-color: #fff;
+  box-shadow:
+    0 0 16px rgba(57, 255, 20, 0.5),
+    inset 0 0 14px rgba(57, 255, 20, 0.15);
+}
+
+/* Buttons */
+.lb-submit,
+.lb-close {
+  font-family: "ArcadeFont", monospace;
+  font-size: clamp(12px, 3vw, 20px);
+  cursor: pointer;
+  padding: 8px 28px;
+  border-radius: 6px;
+  letter-spacing: 3px;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.lb-submit {
+  background: var(--saber-green);
+  color: #000;
+  text-shadow: none;
+  box-shadow: 0 0 14px rgba(57, 255, 20, 0.4);
+}
+
+.lb-submit:hover {
+  box-shadow:
+    0 0 20px rgba(57, 255, 20, 0.6),
+    0 0 40px rgba(57, 255, 20, 0.3);
+  transform: scale(1.05);
+}
+
+.lb-close {
+  background: transparent;
+  color: var(--saber-blue);
+  border: 1px solid var(--saber-blue);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.2);
+  margin-top: 12px;
+}
+
+.lb-close:hover {
+  background: rgba(0, 191, 255, 0.1);
+  box-shadow:
+    0 0 16px rgba(0, 191, 255, 0.4),
+    0 0 30px rgba(0, 191, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.lb-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Trophy / Leaderboard buttons on menu */
+#leaderboard-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.lb-menu-btn {
+  font-family: "ArcadeFont", monospace;
+  font-size: clamp(10px, 2.5vw, 16px);
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 6px;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--sw-yellow);
+  border: 1px solid var(--sw-yellow);
+  box-shadow: 0 0 8px rgba(255, 232, 31, 0.2);
+}
+
+.lb-menu-btn:hover {
+  background: rgba(255, 232, 31, 0.1);
+  box-shadow:
+    0 0 14px rgba(255, 232, 31, 0.4),
+    0 0 28px rgba(255, 232, 31, 0.15);
+  transform: scale(1.05);
+}

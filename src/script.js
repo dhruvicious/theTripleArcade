@@ -2,6 +2,12 @@ import "./style.css";
 import SnakeGame from "./snake.js";
 import Tetris from "./tetris.js";
 import BreakOut from "./break-out.js";
+import {
+  qualifiesForLeaderboard,
+  showLeaderboard,
+  showLeaderboardEntry,
+} from "./leaderboard.js";
+
 const gameOptions = document.querySelectorAll(".game-option");
 const menuElement = document.getElementById("menu");
 const titleElement = document.getElementById("title");
@@ -9,7 +15,38 @@ const currentScoreElement = document.getElementById("currentScore");
 const maxScoreElement = document.getElementById("maxScore");
 let selectedIndex = 0;
 let currentGame = null;
+let leaderboardOpen = false;
 
+// ─── Leaderboard menu buttons ────────────────────────────
+document.querySelectorAll(".lb-menu-btn").forEach((btn) => {
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const gameKey = btn.dataset.game;
+    if (gameKey && !leaderboardOpen) {
+      leaderboardOpen = true;
+      await showLeaderboard(gameKey, () => {
+        leaderboardOpen = false;
+      });
+    }
+  });
+});
+
+/**
+ * Called by a game when the player dies / game resets.
+ * If the score qualifies, show the entry overlay; otherwise just continue.
+ * @param {string} gameKey - 'snake', 'tetris', or 'breakout'
+ * @param {number} score - the final score before reset
+ */
+async function onGameOver(gameKey, score) {
+  if (await qualifiesForLeaderboard(gameKey, score)) {
+    leaderboardOpen = true;
+    await showLeaderboardEntry(gameKey, score, () => {
+      leaderboardOpen = false;
+    });
+  }
+}
+
+// ─── Menu navigation ─────────────────────────────────────
 gameOptions.forEach(function (option, index) {
   option.addEventListener("mouseenter", function () {
     if (currentGame == null && selectedIndex !== index) {
@@ -40,6 +77,8 @@ function updateSelected() {
 }
 
 function handleKeyPress(event) {
+  if (leaderboardOpen) return; // Don't process game keys while leaderboard is open
+
   if (currentGame == null) {
     switch (event.key) {
       case "ArrowUp":
@@ -79,20 +118,20 @@ function startGameSelected() {
       menuElement.style.display = "none";
       titleElement.style.display = "none";
 
-      currentGame = new SnakeGame();
+      currentGame = new SnakeGame(onGameOver);
       currentGame.start();
       break;
     case 1:
       menuElement.style.display = "none";
       titleElement.style.display = "none";
-      currentGame = new Tetris();
+      currentGame = new Tetris(onGameOver);
       currentGame.start();
 
       break;
     case 2:
       menuElement.style.display = "none";
       titleElement.style.display = "none";
-      currentGame = new BreakOut();
+      currentGame = new BreakOut(onGameOver);
       currentGame.start();
 
       break;
@@ -107,3 +146,4 @@ function handleParentMessage(event) {
 
 window.addEventListener("message", handleParentMessage);
 window.addEventListener("keydown", handleKeyPress);
+

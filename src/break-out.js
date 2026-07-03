@@ -1,5 +1,6 @@
 class BreakOut {
-  constructor() {
+  constructor(onGameOver) {
+    this.onGameOver = onGameOver;
     this.canvas = document.getElementById("break-out");
     this.context = this.canvas.getContext("2d");
     this.currentScoreElement = document.getElementById("currentScore");
@@ -261,6 +262,11 @@ class BreakOut {
   }
 
   resetLevel() {
+    // Trigger leaderboard check before resetting
+    if (this.onGameOver && this.currentScore > 0) {
+      this.onGameOver("breakout", this.currentScore);
+    }
+
     this.currentScore = 0;
     this.updateScore();
     this.bricks = [];

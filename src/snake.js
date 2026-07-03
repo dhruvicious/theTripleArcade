@@ -1,5 +1,6 @@
 class SnakeGame {
-  constructor() {
+  constructor(onGameOver) {
+    this.onGameOver = onGameOver;
     this.canvas = document.getElementById("game");
     this.context = this.canvas.getContext("2d");
 
@@ -112,6 +113,11 @@ class SnakeGame {
 
   // Reset snake on death
   resetSnake() {
+    // Trigger leaderboard check before resetting
+    if (this.onGameOver && this.currentScore > 0) {
+      this.onGameOver("snake", this.currentScore);
+    }
+
     this.currentScore = 0;
     this.updateScore();
 
